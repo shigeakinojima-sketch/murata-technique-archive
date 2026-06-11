@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>村田良蔵 BJJ 技データベース</title>
+<script src="data.js"></script>
+<style>
+/* ── Reset & Variables ───────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:        #080808;
+  --bg-card:   #111111;
+  --bg-header: rgba(8,8,8,.92);
+  --border:    rgba(255,255,255,.07);
+  --border-hv: rgba(255,255,255,.18);
+  --text:      #f0f0f0;
+  --text-2:    #888;
+  --text-3:    #444;
+  --active-bg: #ffffff;
+  --active-tx: #000000;
+  --accent:    #e0e0e0;
+  --card-radius:14px;
+  --strip-h:   env(safe-area-inset-top,0px);
+}
+
+/* ── Base ────────────────────────────────────── */
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+a{text-decoration:none;color:inherit}
+button{font:inherit;cursor:pointer;border:none;background:none}
+
+/* ── Header ──────────────────────────────────── */
+.header{
+  position:sticky;
+  top:0;
+  z-index:200;
+  background:var(--bg-header);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(12px + var(--strip-h));
+}
+
+.header-inner{
+  padding:0 14px 0;
+}
+
+/* Wordmark */
+.wordmark{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin-bottom:10px;
+}
+.wordmark-name{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--text);
+}
+.wordmark-sub{
+  font-size:10px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+
+/* Search */
+.search-row{
+  position:relative;
+  margin-bottom:10px;
+}
+.search-icon{
+  position:absolute;
+  left:13px;
+  top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  opacity:.4;
+  font-size:15px;
+}
+.search-input{
+  width:100%;
+  padding:11px 36px 11px 38px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border);
+  border-radius:11px;
+  color:var(--text);
+  font-size:15px;
+  outline:none;
+  transition:border-color .2s;
+}
+.search-input::placeholder{color:var(--text-3)}
+.search-input:focus{border-color:rgba(255,255,255,.22)}
+.search-clear{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  width:24px;height:24px;
+  display:none;
+  align-items:center;justify-content:center;
+  background:rgba(255,255,255,.1);
+  border-radius:50%;
+  color:var(--text-2);
+  font-size:12px;
+}
+.search-clear.visible{display:flex}
+
+/* Tag strip — wrapping layout */
+.tag-strip-wrap{ position:relative; }
+
+.tag-strip{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:0 14px 0;
+  /* 折りたたみ: 約2行分 = pill高さ26px × 2 + gap6px = 58px */
+  max-height:58px;
+  overflow:hidden;
+  transition:max-height .3s ease;
+}
+.tag-strip.expanded{ max-height:600px; }
+
+.tag-btn{
+  padding:5px 13px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);
+  border-radius:100px;
+  color:var(--text-2);
+  font-size:11px;
+  letter-spacing:.02em;
+  transition:all .14s;
+  white-space:nowrap;
+  user-select:none;
+}
+.tag-btn:hover{border-color:var(--border-hv);color:var(--text)}
+.tag-btn.active{
+  background:var(--active-bg);
+  border-color:var(--active-bg);
+  color:var(--active-tx);
+  font-weight:700;
+}
+.tag-btn.tag-all{
+  border-color:rgba(255,255,255,.18);
+  color:var(--text);
+  font-weight:600;
+}
+.tag-btn.tag-all.active{
+  background:var(--active-bg);
+  color:var(--active-tx);
+}
+
+/* expand toggle */
+.tag-expand{
+  display:block;
+  width:100%;
+  text-align:center;
+  padding:6px 0 10px;
+  font-size:11px;
+  color:var(--text-3);
+  letter-spacing:.06em;
+  transition:color .14s;
+}
+.tag-expand:hover{ color:var(--text-2); }
+
+/* ── Results bar ─────────────────────────────── */
+.results-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 14px 6px;
+}
+.results-count{
+  font-size:11px;
+  letter-spacing:.08em;
+  color:var(--text-3);
+  text-transform:uppercase;
+}
+.clear-btn{
+  display:none;
+  font-size:11px;
+  color:var(--text-2);
+  padding:3px 10px;
+  border:1px solid var(--border);
+  border-radius:100px;
+  transition:all .14s;
+}
+.clear-btn:hover{border-color:var(--border-hv);color:var(--text)}
+.clear-btn.visible{display:block}
+
+/* Category quick filters */
+.cat-strip{
+  display:flex;gap:6px;
+  padding:0 14px 8px;
+  overflow-x:auto;scrollbar-width:none;
+}
+.cat-strip::-webkit-scrollbar{display:none}
+.cat-btn{
+  flex-shrink:0;
+  padding:4px 12px;
+  border:1px solid var(--border);
+  border-radius:100px;
+  color:var(--text-3);
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  transition:all .14s;
+}
+.cat-btn:hover{border-color:var(--border-hv);color:var(--text)}
+.cat-btn.active{background:var(--active-bg);border-color:var(--active-bg);color:var(--active-tx);font-weight:700}
+
+/* ── Grid ────────────────────────────────────── */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:0 10px 100px;
+}
+@media(min-width:520px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:800px){.grid{grid-template-columns:repeat(4,1fr);gap:12px;padding:0 16px 100px}}
+@media(min-width:1100px){.grid{grid-template-columns:repeat(5,1fr)}}
+
+/* ── Card ────────────────────────────────────── */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--card-radius);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+  display:flex;flex-direction:column;
+}
+.card:hover{
+  transform:translateY(-3px);
+  border-color:var(--border-hv);
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+.card:active{transform:translateY(-1px)}
+
+/* Thumbnail */
+.card-thumb{
+  aspect-ratio:9/16;
+  background:#0d0d0d;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.card-thumb img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+  transition:transform .3s ease;
+}
+.card:hover .card-thumb img{transform:scale(1.03)}
+.card-thumb-placeholder{
+  width:100%;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  color:var(--text-3);
+}
+
+/* Card body */
+.card-body{
+  padding:10px;
+  flex:1;
+  display:flex;flex-direction:column;gap:6px;
+}
+.card-category{
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--text-3);
+}
+.card-name{
+  font-size:12px;
+  font-weight:600;
+  line-height:1.4;
+  color:var(--accent);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-tags{
+  display:flex;flex-wrap:wrap;gap:3px;
+  margin-top:auto;
+}
+.card-tag{
+  font-size:9px;
+  padding:2px 7px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:100px;
+  color:var(--text-3);
+  transition:all .12s;
+  cursor:pointer;
+}
+.card-tag:hover{
+  border-color:rgba(255,255,255,.22);
+  color:var(--text-2);
+}
+
+/* ── Empty ───────────────────────────────────── */
+.empty{
+  grid-column:1/-1;
+  text-align:center;
+  padding:80px 20px;
+  color:var(--text-3);
+}
+.empty-icon{font-size:48px;margin-bottom:14px;opacity:.4}
+.empty-msg{font-size:14px;letter-spacing:.05em}
+
+/* ── Scrolltop ───────────────────────────────── */
+.scroll-top{
+  position:fixed;
+  right:16px;
+  bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  width:40px;height:40px;
+  background:rgba(30,30,30,.9);
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:none;
+  align-items:center;justify-content:center;
+  font-size:16px;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+  transition:opacity .2s;
+  z-index:300;
+}
+.scroll-top.visible{display:flex}
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="wordmark">
+      <span class="wordmark-name">村田良蔵</span>
+      <span class="wordmark-sub">BJJ テクニックライブラリ</span>
+    </div>
+    <div class="search-row">
+      <span class="search-icon">⌕</span>
+      <input class="search-input" id="searchInput" type="search"
+             placeholder="技名・キーワードで検索…" autocomplete="off" spellcheck="false">
+      <button class="search-clear" id="searchClear" aria-label="クリア">✕</button>
+    </div>
+  </div>
+
+  <!-- Category quick filter -->
+  <div class="cat-strip" id="catStrip"></div>
+
+  <!-- Tag strip (wrapping, collapsible) -->
+  <div class="tag-strip-wrap">
+    <div class="tag-strip" id="tagStrip"></div>
+    <button class="tag-expand" id="tagExpand">▾ もっと見る</button>
+  </div>
+</header>
+
+<!-- ── Results bar ─────────────────────────── -->
+<div class="results-bar">
+  <span class="results-count" id="resultsCount"></span>
+  <button class="clear-btn" id="clearBtn">絞り込みをリセット</button>
+</div>
+
+<!-- ── Grid ────────────────────────────────── -->
+<main class="grid" id="grid"></main>
+
+<!-- ── Scroll to top ───────────────────────── -->
+<button class="scroll-top" id="scrollTop" aria-label="トップへ">↑</button>
+
+<script>
+(function(){
+"use strict";
+
+/* ── Data ─────────────────────────────────── */
+const data = window.MURATA_DATA || [];
+
+/* ── State ────────────────────────────────── */
+let query     = "";
+let activeTags = new Set();
+let activeCategory = "";
+
+/* ── DOM refs ─────────────────────────────── */
+const searchInput  = document.getElementById("searchInput");
+const searchClear  = document.getElementById("searchClear");
+const catStrip     = document.getElementById("catStrip");
+const tagStrip     = document.getElementById("tagStrip");
+const grid         = document.getElementById("grid");
+const resultsCount = document.getElementById("resultsCount");
+const clearBtn     = document.getElementById("clearBtn");
+const scrollTopBtn = document.getElementById("scrollTop");
+const tagExpand    = document.getElementById("tagExpand");
+
+/* ── Category list ────────────────────────── */
+const CATEGORIES = ["サブミッション","スイープ","パスガード","エスケープ","テイクダウン","ポジショニング","その他"];
+
+/* ── Tag filtering: 汎用・ブランド系を除外して技術系のみ残す ── */
+const TAG_EXCLUDE = new Set([
+  // ブランド・汎用
+  "柔術","BJJ","村田良蔵","柔術動画","柔術教室",
+  // エンタメ・日常
+  "エンタメ","BJJあるある","柔術あるある","道場","練習風景","スパーリング","練習",
+  // インタビュー・Q&A
+  "インタビュー","体験談","BJJライフ","Q&A","黒帯解説","柔術知識","解説","テクニック解説",
+  // 試合・イベント
+  "試合解説","パンクラス","RIZIN","MMA","大会","試合","世界王者","道場紹介","YAWARA","北海道",
+  // レベル・属性
+  "黒帯","昇格","初心者向け","柔術基礎","レッスン","女性柔術","健康・フィットネス",
+  "柔術体験","芸能人",
+]);
+
+/* 技術タグの表示順優先度（先頭ほど先に表示） */
+const TAG_PRIORITY = [
+  // 具体的な技名
+  "腕十字","三角締め","三角絞め","送り襟締め","オモプラッタ","キムラロック",
+  "草刈りスイープ","足関節","ギロチン","片襟片袖グリップ","道着グリップ",
+  // パス系
+  "ゴリラパス","レッグドラックパス","ニースライスパス","サンパウロパス",
+  // ガード種別
+  "クローズドガード","スパイダーガード","デラヒーバ","ハーフガード",
+  "バックポジション","マウント","サイドコントロール","袈裟固め","逆袈裟固め",
+  // 役割（上下）
+  "ガードボトム","ガードトップ",
+  "マウントボトム","マウントトップ",
+  "バックボトム","バックトップ",
+  "サイドボトム","サイドトップ",
+  // 目的・性質
+  "フィニッシュ","エントリー","ディフェンス","応用","概念解説",
+  "コンビネーション","トランジション","ポジション再取得",
+  // その他残留
+  "セルフディフェンス","護身術",
+];
+
+const tagFreq = {};
+data.forEach(d => (d.tags||[]).forEach(t => { tagFreq[t] = (tagFreq[t]||0)+1; }));
+
+// 除外リストを適用し、優先順でソート（リストにないものは末尾に頻度順）
+const allTags = Object.keys(tagFreq)
+  .filter(t => !TAG_EXCLUDE.has(t))
+  .sort((a, b) => {
+    const pa = TAG_PRIORITY.indexOf(a);
+    const pb = TAG_PRIORITY.indexOf(b);
+    if(pa !== -1 && pb !== -1) return pa - pb;
+    if(pa !== -1) return -1;
+    if(pb !== -1) return 1;
+    return tagFreq[b] - tagFreq[a];
+  });
+
+/* ── Build category strip ─────────────────── */
+CATEGORIES.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.className = "cat-btn";
+  btn.textContent = cat;
+  btn.dataset.cat = cat;
+  btn.onclick = () => toggleCat(cat, btn);
+  catStrip.appendChild(btn);
+});
+
+function toggleCat(cat, btn){
+  if(activeCategory === cat){
+    activeCategory = "";
+    btn.classList.remove("active");
+  } else {
+    document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+    activeCategory = cat;
+    btn.classList.add("active");
+  }
+  render();
+}
+
+/* ── Build tag strip ──────────────────────── */
+const allBtn = document.createElement("button");
+allBtn.className = "tag-btn tag-all active";
+allBtn.textContent = "すべて";
+allBtn.onclick = () => { activeTags.clear(); syncTagButtons(); render(); };
+tagStrip.appendChild(allBtn);
+
+const tagBtns = {};
+allTags.forEach(tag => {
+  const btn = document.createElement("button");
+  btn.className = "tag-btn";
+  btn.textContent = `#${tag}`;
+  btn.dataset.tag = tag;
+  btn.onclick = () => toggleTag(tag);
+  tagStrip.appendChild(btn);
+  tagBtns[tag] = btn;
+});
+
+/* ── Tag strip expand/collapse ────────────── */
+let tagExpanded = false;
+// タグが折りたたみに収まるか判定（2行以内なら展開ボタン不要）
+window.addEventListener("load", () => {
+  const sh = tagStrip.scrollHeight;
+  const mh = 58;
+  if(sh <= mh + 4){
+    tagExpand.style.display = "none";
+  } else {
+    tagExpand.textContent = `▾ もっと見る（全${allTags.length}個）`;
+  }
+});
+tagExpand.onclick = () => {
+  tagExpanded = !tagExpanded;
+  tagStrip.classList.toggle("expanded", tagExpanded);
+  tagExpand.textContent = tagExpanded
+    ? "▴ 閉じる"
+    : `▾ もっと見る（全${allTags.length}個）`;
+};
+
+function toggleTag(tag){
+  activeTags.has(tag) ? activeTags.delete(tag) : activeTags.add(tag);
+  syncTagButtons();
+  render();
+}
+
+function syncTagButtons(){
+  const none = activeTags.size === 0;
+  allBtn.classList.toggle("active", none);
+  Object.entries(tagBtns).forEach(([tag, btn]) => {
+    btn.classList.toggle("active", activeTags.has(tag));
+  });
+}
+
+/* ── Card-tag click (filter by tag) ──────── */
+function onCardTagClick(e, tag){
+  e.preventDefault();
+  e.stopPropagation();
+  activeTags.clear();
+  activeTags.add(tag);
+  syncTagButtons();
+  render();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* ── Filter logic ─────────────────────────── */
+function filter(){
+  const q = query.toLowerCase().trim();
+  return data.filter(d => {
+    if(activeCategory && d.category !== activeCategory) return false;
+    if(activeTags.size){
+      const ts = new Set(d.tags||[]);
+      for(const t of activeTags) if(!ts.has(t)) return false;
+    }
+    if(q){
+      const hay = [d.technique, d.title, d.category, ...(d.tags||[])].join(" ").toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* ── Render ───────────────────────────────── */
+let currentBatch = 0;
+const BATCH_SIZE = 60;
+let filteredResults = [];
+
+function render(){
+  filteredResults = filter();
+  currentBatch = 0;
+  grid.innerHTML = "";
+
+  const hasFilter = query || activeTags.size || activeCategory;
+  clearBtn.classList.toggle("visible", !!hasFilter);
+
+  resultsCount.textContent = `${filteredResults.length} 件`;
+
+  if(filteredResults.length === 0){
+    grid.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🥋</div>
+        <div class="empty-msg">該当する動画が見つかりませんでした</div>
+      </div>`;
+    return;
+  }
+
+  renderBatch();
+}
+
+function renderBatch(){
+  const start = currentBatch * BATCH_SIZE;
+  const end   = Math.min(start + BATCH_SIZE, filteredResults.length);
+  const frag  = document.createDocumentFragment();
+
+  for(let i = start; i < end; i++){
+    frag.appendChild(makeCard(filteredResults[i]));
+  }
+  grid.appendChild(frag);
+  currentBatch++;
+}
+
+function makeCard(d){
+  const a = document.createElement("a");
+  a.className = "card";
+  a.href = d.url || "#";
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+
+  /* Thumbnail */
+  let thumbHtml;
+  if(d.thumb){
+    thumbHtml = `<img src="${d.thumb}" alt="${esc(d.technique)}" loading="lazy"
+      onerror="this.parentElement.innerHTML='<div class=\\"card-thumb-placeholder\\">🥋</div>'">`;
+  } else {
+    thumbHtml = `<div class="card-thumb-placeholder">🥋</div>`;
+  }
+
+  /* Tags (max 3 shown) */
+  const tagsHtml = (d.tags||[]).slice(0,3).map(t =>
+    `<span class="card-tag" data-tag="${esc(t)}">#${esc(t)}</span>`
+  ).join("");
+
+  a.innerHTML = `
+    <div class="card-thumb">${thumbHtml}</div>
+    <div class="card-body">
+      <div class="card-category">${esc(d.category)}</div>
+      <div class="card-name">${esc(d.technique || d.title || "—")}</div>
+      <div class="card-tags">${tagsHtml}</div>
+    </div>`;
+
+  /* Card-tag click → filter */
+  a.querySelectorAll(".card-tag").forEach(el => {
+    el.addEventListener("click", e => onCardTagClick(e, el.dataset.tag));
+  });
+
+  return a;
+}
+
+function esc(s){
+  return String(s||"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+/* ── Infinite scroll ──────────────────────── */
+const sentinel = document.createElement("div");
+sentinel.style.cssText = "height:1px";
+document.body.appendChild(sentinel);
+
+const io = new IntersectionObserver(entries => {
+  if(entries[0].isIntersecting && currentBatch * BATCH_SIZE < filteredResults.length){
+    renderBatch();
+  }
+}, {rootMargin:"200px"});
+io.observe(sentinel);
+
+/* ── Scroll-to-top ────────────────────────── */
+window.addEventListener("scroll", () => {
+  scrollTopBtn.classList.toggle("visible", window.scrollY > 400);
+}, {passive:true});
+scrollTopBtn.onclick = () => window.scrollTo({top:0, behavior:"smooth"});
+
+/* ── Search ───────────────────────────────── */
+let debounceTimer;
+searchInput.addEventListener("input", e => {
+  query = e.target.value;
+  searchClear.classList.toggle("visible", !!query);
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(render, 120);
+});
+searchClear.onclick = () => {
+  searchInput.value = "";
+  query = "";
+  searchClear.classList.remove("visible");
+  render();
+  searchInput.focus();
+};
+
+/* ── Clear all filters ────────────────────── */
+clearBtn.onclick = () => {
+  searchInput.value = ""; query = "";
+  activeTags.clear();
+  activeCategory = "";
+  searchClear.classList.remove("visible");
+  document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+  syncTagButtons();
+  render();
+};
+
+/* ── Init ─────────────────────────────────── */
+render();
+
+})();
+</script>
+</body>
+</html>
