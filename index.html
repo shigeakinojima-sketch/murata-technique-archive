@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>村田良蔵 BJJ 技データベース</title>
+<title>村田良蔵 テクニック動画アーカイブ</title>
 <script src="data.js"></script>
 <style>
 /* ── Reset & Variables ───────────────────────── */
@@ -56,21 +56,57 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 
 /* Wordmark */
 .wordmark{
+  margin-bottom:12px;
+}
+.wordmark-top{
   display:flex;
-  align-items:baseline;
+  align-items:flex-end;
+  justify-content:space-between;
   gap:10px;
-  margin-bottom:10px;
+}
+.wordmark-eyebrow{
+  font-size:9px;
+  font-weight:600;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--text-3);
+  margin-bottom:3px;
 }
 .wordmark-name{
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.18em;
-  text-transform:uppercase;
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:-.02em;
   color:var(--text);
+  line-height:1;
+}
+.wordmark-badge{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  padding-bottom:2px;
+}
+.wordmark-count{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.04em;
+  color:rgba(255,255,255,.12);
+  line-height:1;
+}
+.wordmark-count-label{
+  font-size:8px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--text-3);
+  margin-top:1px;
+}
+.wordmark-rule{
+  height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.04) 55%,transparent 100%);
+  margin:8px 0 6px;
 }
 .wordmark-sub{
-  font-size:10px;
-  letter-spacing:.12em;
+  font-size:9px;
+  letter-spacing:.18em;
   text-transform:uppercase;
   color:var(--text-3);
 }
@@ -346,8 +382,18 @@ button{font:inherit;cursor:pointer;border:none;background:none}
 <header class="header">
   <div class="header-inner">
     <div class="wordmark">
-      <span class="wordmark-name">村田良蔵</span>
-      <span class="wordmark-sub">BJJ テクニックライブラリ</span>
+      <div class="wordmark-top">
+        <div>
+          <div class="wordmark-eyebrow">RYOZO MURATA</div>
+          <div class="wordmark-name">村田良蔵</div>
+        </div>
+        <div class="wordmark-badge">
+          <span class="wordmark-count">450</span>
+          <span class="wordmark-count-label">VIDEOS</span>
+        </div>
+      </div>
+      <div class="wordmark-rule"></div>
+      <div class="wordmark-sub">テクニック動画アーカイブ</div>
     </div>
     <div class="search-row">
       <span class="search-icon">⌕</span>
